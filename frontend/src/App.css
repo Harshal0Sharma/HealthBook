@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Outfit:wght@100..900&family=Permanent+Marker&display=swap');
+
+@import "tailwindcss";
+
+
+:root {
+    --tw-primary: #5f6FFF;
+    --tw-auto: repeat(auto-fill, minmax(200px, 1fr))
+}
+
+* {
+    font-family: Outfit;
+}
+
+
+
+
+
+.active hr {
+    @apply block
+}
+
+::-webkit-scrollbar {
+    @apply hidden
+}
