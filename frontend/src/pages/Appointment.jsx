@@ -18,31 +18,28 @@ const Appointment = () => {
     setDocInfo(docInfo);
   };
 
-  const getAvailableSlots = async () => {
+  const getAvailableSlots = () => {
     setDocSlots([]);
 
-    // getting date
+    // Get today's date
     let today = new Date();
 
     for (let i = 0; i < 7; i++) {
       let currentDate = new Date(today);
-      currentDate.setDate(today.getDate() + 1);
+      currentDate.setDate(today.getDate() + i);
 
-      // end time
-      let endTime = new Date();
-      endTime.setDate(today.getDate() + i);
-      endTime.setHours(21, 0, 0, 0);
-
-      // setting time
-      if (today.getDate() === currentDate.getDate()) {
-        currentDate.setHours(
-          currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10
-        );
-        currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
+      // Set the start time for the first slot
+      if (i === 0) {
+        currentDate.setHours(10);
+        currentDate.setMinutes(0);
       } else {
         currentDate.setHours(10);
         currentDate.setMinutes(0);
       }
+
+      // Set the end time for the last slot
+      let endTime = new Date(currentDate);
+      endTime.setHours(21, 0, 0, 0);
 
       let timeSlots = [];
       while (currentDate < endTime) {
@@ -51,18 +48,23 @@ const Appointment = () => {
           minute: "2-digit",
         });
 
-        // add time in array
+        // Add time to the array
         timeSlots.push({
           datetime: new Date(currentDate),
           time: formattedTime,
         });
 
-        // time increase by 30min
-
+        // Increment time by 30 minutes
         currentDate.setMinutes(currentDate.getMinutes() + 30);
       }
 
-      setDocSlots((prev) => [...prev, timeSlots]);
+      // Filter out slots that are in the past
+      const filteredSlots = timeSlots.filter(
+        (slot) => slot.datetime > new Date()
+      );
+      if (filteredSlots.length > 0) {
+        setDocSlots((prev) => [...prev, filteredSlots]);
+      }
     }
   };
 
@@ -71,16 +73,14 @@ const Appointment = () => {
   }, [doctors, docId]);
 
   useEffect(() => {
-    getAvailableSlots();
+    if (docInfo) {
+      getAvailableSlots();
+    }
   }, [docInfo]);
-
-  useEffect(() => {
-    console.log(docSlots);
-  }, [docSlots]);
 
   return (
     <div>
-      {/* doctors info */}
+      {/* Doctor's Info */}
       {docInfo ? (
         <div className="flex flex-col sm:flex-row gap-4">
           <div>
@@ -92,7 +92,6 @@ const Appointment = () => {
           </div>
 
           <div className="flex-1 border border-gray-400 rounded-lg p-8 py-7 bg-white mx-5 sm:mx-0 mt-[-80px] sm:mt-0">
-            {/* docotrs info ,  name , address and all */}
             <p className="flex items-center gap-2 text-2xl font-medium text-gray-900">
               {docInfo.name}
               <img className="w-5" src={assets.verified_icon} alt="" />
@@ -106,7 +105,6 @@ const Appointment = () => {
               </button>
             </div>
 
-            {/* about doc */}
             <div>
               <p className="flex items-center gap-1 text-sm font-medium text-gray-900 mt-3">
                 About <img src={assets.info_icon} alt="" />
@@ -127,11 +125,12 @@ const Appointment = () => {
       ) : (
         <p>Loading doctor details...</p>
       )}
-      {/*  booking slots */}
+
+      {/* Booking Slots */}
       <div className="sm:ml-72 sm:pl-4 mt-4 font-medium text-gray-700">
         <p>Booking slots</p>
         <div className="flex gap-3 items-center w-full overflow-x-scroll mt-4">
-          {docSlots.length &&
+          {docSlots.length > 0 &&
             docSlots.map((item, index) => (
               <div
                 onClick={() => setSlotIndex(index)}
@@ -142,14 +141,14 @@ const Appointment = () => {
                 }`}
                 key={index}
               >
-                <p>{item[0] && daysOfWeek[item[0].datetime.getDate()]}</p>
+                <p>{item[0] && daysOfWeek[item[0].datetime.getDay()]}</p>
                 <p>{item[0] && item[0].datetime.getDate()}</p>
               </div>
             ))}
         </div>
 
         <div className="flex items-center gap-3 w-full overflow-x-scroll mt-4">
-          {docSlots.length &&
+          {docSlots.length > 0 &&
             docSlots[slotIndex].map((item, index) => (
               <p
                 onClick={() => setSlotTime(item.time)}
@@ -160,7 +159,7 @@ const Appointment = () => {
                 }`}
                 key={index}
               >
-                {item.time.toLowerCase}
+                {item.time}
               </p>
             ))}
         </div>
