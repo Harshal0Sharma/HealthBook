@@ -124,12 +124,10 @@ const Appointment = () => {
             </p>
           </div>
         </div>
-
       ) : (
         <p>Loading doctor details...</p>
       )}
-
-     
+      {/*  booking */}
     </div>
   );
 };
