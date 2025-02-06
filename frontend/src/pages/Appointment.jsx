@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
+import RelatedDoctors from "../components/RelatedDoctors";
 
 const Appointment = () => {
   const { docId } = useParams();
@@ -13,31 +14,28 @@ const Appointment = () => {
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotTime, setSlotTime] = useState("");
 
-  const fetchDocInfo = () => {
-    const docInfo = doctors.find((doc) => doc._id === docId);
-    setDocInfo(docInfo);
-  };
+  useEffect(() => {
+    if (doctors.length > 0) {
+      const doctor = doctors.find((doc) => doc._id === docId);
+      setDocInfo(doctor || null);
+    }
+  }, [doctors, docId]);
 
-  const getAvailableSlots = () => {
-    setDocSlots([]);
+  useEffect(() => {
+    if (docInfo) {
+      generateAvailableSlots();
+    }
+  }, [docInfo]);
 
-    // Get today's date
+  const generateAvailableSlots = () => {
     let today = new Date();
+    let slots = [];
 
     for (let i = 0; i < 7; i++) {
       let currentDate = new Date(today);
       currentDate.setDate(today.getDate() + i);
+      currentDate.setHours(10, 0, 0, 0);
 
-      // Set the start time for the first slot
-      if (i === 0) {
-        currentDate.setHours(10);
-        currentDate.setMinutes(0);
-      } else {
-        currentDate.setHours(10);
-        currentDate.setMinutes(0);
-      }
-
-      // Set the end time for the last slot
       let endTime = new Date(currentDate);
       endTime.setHours(21, 0, 0, 0);
 
@@ -48,35 +46,24 @@ const Appointment = () => {
           minute: "2-digit",
         });
 
-        // Add time to the array
         timeSlots.push({
           datetime: new Date(currentDate),
           time: formattedTime,
         });
 
-        // Increment time by 30 minutes
         currentDate.setMinutes(currentDate.getMinutes() + 30);
       }
 
-      // Filter out slots that are in the past
       const filteredSlots = timeSlots.filter(
         (slot) => slot.datetime > new Date()
       );
       if (filteredSlots.length > 0) {
-        setDocSlots((prev) => [...prev, filteredSlots]);
+        slots.push(filteredSlots);
       }
     }
+
+    setDocSlots(slots);
   };
-
-  useEffect(() => {
-    fetchDocInfo();
-  }, [doctors, docId]);
-
-  useEffect(() => {
-    if (docInfo) {
-      getAvailableSlots();
-    }
-  }, [docInfo]);
 
   return (
     <div>
@@ -149,7 +136,7 @@ const Appointment = () => {
 
         <div className="flex items-center gap-3 w-full overflow-x-scroll mt-4">
           {docSlots.length > 0 &&
-            docSlots[slotIndex].map((item, index) => (
+            docSlots[slotIndex]?.map((item, index) => (
               <p
                 onClick={() => setSlotTime(item.time)}
                 className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${
@@ -167,6 +154,11 @@ const Appointment = () => {
           Book an Appointment
         </button>
       </div>
+
+      {/* Related Doctors */}
+      {docInfo && (
+        <RelatedDoctors docId={docInfo._id} speciality={docInfo.speciality} />
+      )}
     </div>
   );
 };
